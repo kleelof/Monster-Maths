@@ -578,4 +578,4 @@ const config = {
   scene: [BootScene, MenuScene, GameScene]
 };
 
-new Phaser.Game(config);
+window.monsterMathsGame = new Phaser.Game(config);
