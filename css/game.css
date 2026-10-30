@@ -1,0 +1,103 @@
+:root {
+  color-scheme: dark;
+  font-family: "Trebuchet MS", "Comic Sans MS", system-ui, sans-serif;
+  --ink: #f5ffe3;
+  --green: #72d42c;
+  --yellow: #ffe94d;
+  --deep: #071f18;
+}
+
+* { box-sizing: border-box; }
+
+html, body { width: 100%; height: 100%; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 50% 10%, #235638 0, transparent 42%),
+    linear-gradient(145deg, #061814, #0c2d22 55%, #04110e);
+  overflow: hidden;
+}
+
+button, input { font: inherit; }
+
+.page-shell {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.game-frame {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #0a3925;
+}
+
+#game-container, #game-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+#loading-message {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: .08em;
+  color: var(--yellow);
+}
+
+.game-dialog {
+  width: min(92vw, 520px);
+  border: 3px solid #abe764;
+  border-radius: 22px;
+  color: #f6ffe9;
+  background: linear-gradient(160deg, #123d2c, #071b16);
+  box-shadow: 0 25px 90px #000c;
+  padding: 0;
+}
+
+.game-dialog::backdrop { background: #03100dcc; backdrop-filter: blur(5px); }
+.game-dialog form { padding: clamp(22px, 5vw, 40px); }
+.game-dialog h1 { margin: 0 0 22px; color: #ffe94d; line-height: 1.05; }
+.game-dialog label, .game-dialog legend { font-weight: 800; }
+.game-dialog input[type="text"], .game-dialog input:not([type]) {
+  width: 100%;
+  margin: 7px 0 22px;
+  padding: 12px 14px;
+  border: 2px solid #83be5a;
+  border-radius: 10px;
+  color: #10251d;
+  background: #f8ffe9;
+}
+
+.eyebrow { margin: 0 0 6px; color: #8fe34e; font-size: .78rem; font-weight: 900; letter-spacing: .16em; }
+fieldset { border: 0; padding: 0; margin: 0 0 24px; }
+.hero-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+.hero-option { display: grid; place-items: center; gap: 6px; padding: 10px; border: 2px solid #ffffff2c; border-radius: 14px; cursor: pointer; }
+.hero-option:has(input:checked) { border-color: #ffe94d; background: #ffe94d18; }
+.hero-portrait { width: 86px; height: 110px; background-image: url("../assets/images/bo.png"); background-repeat: no-repeat; background-size: 188px 149px; background-position-y: 0; }
+.hero-portrait.girl { background-position-x: 0; }
+.hero-portrait.boy { background-position-x: -96px; }
+.primary-button {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 13px 18px;
+  font-weight: 1000;
+  color: #173009;
+  background: linear-gradient(#fff56a, #aade3c);
+  cursor: pointer;
+  box-shadow: 0 5px 0 #5b7d20;
+}
+.primary-button:active { transform: translateY(3px); box-shadow: 0 2px 0 #5b7d20; }
+.instructions-dialog li { margin: 0 0 12px; line-height: 1.4; }
+

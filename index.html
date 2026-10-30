@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071f18">
+  <meta name="description" content="Monster Maths — a fast, friendly arithmetic adventure.">
+  <title>Monster Maths</title>
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+  <main class="page-shell">
+    <section class="game-frame" aria-label="Monster Maths game">
+      <div id="game-container">
+        <p id="loading-message">Loading Monster Maths…</p>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="profile-dialog" class="game-dialog">
+    <form id="profile-form" method="dialog">
+      <p class="eyebrow">NEW ADVENTURE</p>
+      <h1>Choose your maths hero</h1>
+      <label for="player-name">Hero name</label>
+      <input id="player-name" name="playerName" maxlength="16" autocomplete="nickname" value="Math Hero" required>
+
+      <fieldset>
+        <legend>Choose a character</legend>
+        <div class="hero-options">
+          <label class="hero-option">
+            <input type="radio" name="hero" value="girl" checked>
+            <span class="hero-portrait girl" aria-hidden="true"></span>
+            <span>Girl</span>
+          </label>
+          <label class="hero-option">
+            <input type="radio" name="hero" value="boy">
+            <span class="hero-portrait boy" aria-hidden="true"></span>
+            <span>Boy</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <button class="primary-button" value="start">Start game</button>
+    </form>
+  </dialog>
+
+  <dialog id="instructions-dialog" class="game-dialog instructions-dialog">
+    <form method="dialog">
+      <p class="eyebrow">HOW TO PLAY</p>
+      <h1>Clear the monsters with maths</h1>
+      <ol>
+        <li>Hold the mouse button to move toward the pointer without letting a monster touch you.</li>
+        <li>Click a monster to see its question, then type the answer and press Enter.</li>
+        <li>Monster 1 is slow and asks questions from the previous level.</li>
+        <li>Monster 3 has medium speed and asks current-level questions.</li>
+        <li>Monster 2 is fastest and asks questions from the next level.</li>
+        <li>Correct answers clear monsters. Wrong answers cost one life.</li>
+        <li>Hold Space while mouse-moving to teleport freely. Teleporting drains the energy meter.</li>
+        <li>Release Space to move normally and recharge teleport energy.</li>
+        <li>Clear three waves to reach the next maths level.</li>
+      </ol>
+      <button class="primary-button" value="close">Got it</button>
+    </form>
+  </dialog>
+
+  <script src="vendor/phaser.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
