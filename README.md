@@ -16,8 +16,10 @@ Then open <http://localhost:8000> in a modern browser.
 ## Controls
 
 - Move: hold the mouse button and move the pointer
-- Teleport: hold Space while mouse-moving; release it to recharge
+- Teleport: hold Space while mouse-moving; monsters restore a little energy and wave completion refills it
 - Answer: number keys and Enter
 - Mute: M or the SOUND button
 
 The game is designed for desktop browsers and an 800×500 play area.
+
+Each maths level has three waves containing 3, 5, and 7 monsters. Clearing wave three advances to the next level.

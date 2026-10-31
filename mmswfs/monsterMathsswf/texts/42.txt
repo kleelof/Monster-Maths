@@ -1,0 +1,9 @@
+To move your hero, just grab it with the
+--- RECORDSEPARATOR ---
+mouse and move them where you want. Be
+--- RECORDSEPARATOR ---
+careful though, if your tele-energy gets
+--- RECORDSEPARATOR ---
+to 0%, you cannot move anymore until
+--- RECORDSEPARATOR ---
+you kill a monster.

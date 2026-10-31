@@ -3,41 +3,33 @@ import { generateQuestion } from "./questions.js";
 const WIDTH = 800;
 const HEIGHT = 500;
 const TELEPORT_TIME = 4000;
+const TELEPORT_RECHARGE_PER_MONSTER = 500;
+const MONSTER_SPEED_MULTIPLIER = 1.5;
+const EXPORT_ROOT = "mmswfs/monsterMathsswf";
+const MONSTER_ANIMATIONS = {
+  1: { folder: "DefineSprite_67_monsterMaths_fla.mon1walk_13", frames: 37 },
+  2: { folder: "DefineSprite_77_monsterMaths_fla.mon2walk_11", frames: 25 },
+  3: { folder: "DefineSprite_83_monsterMaths_fla.mon3walk_8", frames: 21 }
+};
 
 const campaign = {
   playerName: "Math Hero",
   hero: "girl",
   level: 1,
-  stage: 1,
+  wave: 1,
   score: 0,
-  lives: 3
+  lives: 3,
+  teleportCharge: TELEPORT_TIME
 };
 
 function resetCampaign(profile = {}) {
   campaign.playerName = profile.playerName || "Math Hero";
   campaign.hero = profile.hero || "girl";
   campaign.level = 1;
-  campaign.stage = 1;
+  campaign.wave = 1;
   campaign.score = 0;
   campaign.lives = 3;
-}
-
-function makeButton(scene, x, y, label, onClick, width = 230) {
-  const background = scene.add.rectangle(x, y, width, 54, 0xb9e94b)
-    .setStrokeStyle(4, 0x345d22)
-    .setInteractive({ useHandCursor: true });
-  const text = scene.add.text(x, y, label, {
-    fontFamily: "Trebuchet MS, sans-serif",
-    fontSize: "24px",
-    fontStyle: "bold",
-    color: "#173009"
-  }).setOrigin(0.5);
-
-  background.on("pointerover", () => background.setFillStyle(0xffef54));
-  background.on("pointerout", () => background.setFillStyle(0xb9e94b));
-  background.on("pointerdown", () => { background.setScale(0.97); onClick(); });
-  background.on("pointerup", () => background.setScale(1));
-  return scene.add.container(0, 0, [background, text]);
+  campaign.teleportCharge = TELEPORT_TIME;
 }
 
 function openProfileDialog() {
@@ -63,11 +55,17 @@ class BootScene extends Phaser.Scene {
 
   preload() {
     this.load.image("title", "assets/images/title.png");
-    this.load.image("logo", "assets/images/logo.png");
     this.load.spritesheet("heroes", "assets/images/bo.png", { frameWidth: 222, frameHeight: 352 });
-    this.load.image("monster1", "assets/images/mon1.png");
-    this.load.image("monster2", "assets/images/mon2.png");
-    this.load.image("monster3", "assets/images/mon3.png");
+    this.load.image("originalScore", `${EXPORT_ROOT}/sprites/DefineSprite_144_monsterMaths_fla.score_42/1.png`);
+    this.load.image("originalGameOver", `${EXPORT_ROOT}/sprites/DefineSprite_23_gameOverMSG/1.png`);
+    Object.entries(MONSTER_ANIMATIONS).forEach(([type, animation]) => {
+      for (let frame = 1; frame <= animation.frames; frame += 1) {
+        this.load.image(
+          `monster${type}-walk-${frame}`,
+          `${EXPORT_ROOT}/sprites/${animation.folder}/${frame}.png`
+        );
+      }
+    });
     this.load.audio("titleMusic", "assets/audio/titleMusicTheme.mp3");
     this.load.audio("gameMusic", "assets/audio/gamePlayMusic.mp3");
     this.load.audio("wrong", "assets/audio/wrongAnswer.mp3");
@@ -85,25 +83,47 @@ class MenuScene extends Phaser.Scene {
 
   create() {
     this.add.image(WIDTH / 2, HEIGHT / 2, "title").setDisplaySize(WIDTH, HEIGHT);
-    this.add.rectangle(WIDTH / 2, 438, WIDTH, 124, 0x041a12, 0.82);
+    const creditStyle = {
+      fontFamily: "Comic Sans MS, cursive", fontSize: "18px", fontStyle: "bold",
+      stroke: "#002416", strokeThickness: 3
+    };
+    this.add.text(242, 472, "Created By", { ...creditStyle, color: "#ffffff" })
+      .setOrigin(0.5).setDepth(2);
+    this.add.text(390, 451, "K. Lee Loftiss", { ...creditStyle, fontSize: "24px", color: "#ff1818" })
+      .setOrigin(0.5).setDepth(2);
+    this.add.text(523, 472, "And", { ...creditStyle, color: "#ffffff" })
+      .setOrigin(0.5).setDepth(2);
+    this.add.text(654, 451, "Shirhan Manan", { ...creditStyle, fontSize: "24px", color: "#ff1818" })
+      .setOrigin(0.5).setDepth(2);
     this.titleMusic = this.sound.add("titleMusic", { loop: true, volume: 0.32 });
-    this.input.once("pointerdown", () => this.titleMusic.play());
-    this.events.once("shutdown", () => this.titleMusic?.stop());
+    const controls = document.querySelector("#menu-controls");
+    const playButton = document.querySelector("#play-button");
+    const instructionsButton = document.querySelector("#instructions-button");
+    controls.hidden = false;
 
-    makeButton(this, 270, 438, "PLAY", async () => {
+    const startTitleMusic = () => {
+      if (!this.titleMusic.isPlaying) this.titleMusic.play();
+    };
+
+    playButton.onclick = async () => {
+      startTitleMusic();
       const profile = await openProfileDialog();
       resetCampaign(profile);
       this.scene.start("game");
-    }, 210);
+    };
 
-    makeButton(this, 530, 438, "HOW TO PLAY", () => {
+    instructionsButton.onclick = () => {
+      startTitleMusic();
       document.querySelector("#instructions-dialog").showModal();
-    }, 240);
+    };
 
-    this.add.text(14, 12, "Browser Edition", {
-      fontFamily: "Trebuchet MS", fontSize: "15px", color: "#d8efb4",
-      backgroundColor: "#06231bb5", padding: { x: 9, y: 5 }
+    this.events.once("shutdown", () => {
+      controls.hidden = true;
+      playButton.onclick = null;
+      instructionsButton.onclick = null;
+      this.titleMusic?.stop();
     });
+
   }
 }
 
@@ -114,7 +134,7 @@ class GameScene extends Phaser.Scene {
     this.answering = false;
     this.roundOver = false;
     this.playerInvulnerable = false;
-    this.teleportCharge = TELEPORT_TIME;
+    this.teleportCharge = campaign.teleportCharge;
     this.teleporting = false;
     this.teleportExhausted = false;
     this.spaceHeld = false;
@@ -124,10 +144,10 @@ class GameScene extends Phaser.Scene {
 
     const heroFrame = campaign.hero === "boy" ? 1 : 0;
     this.player = this.physics.add.sprite(400, 390, "heroes", heroFrame)
-      .setDisplaySize(66, 104)
+      .setDisplaySize(55, 87)
       .setCollideWorldBounds(true)
       .setDepth(4);
-    this.player.body.setSize(40, 70).setOffset(91, 118);
+    this.player.body.setSize(34, 60);
     this.moveTarget = { x: this.player.x, y: this.player.y };
     this.input.on("pointerdown", (pointer) => {
       this.mouseMoving = true;
@@ -166,6 +186,7 @@ class GameScene extends Phaser.Scene {
     this.createHud();
     this.gameMusic = this.sound.add("gameMusic", { loop: true, volume: 0.3 });
     this.gameMusic.play();
+    this.showWaveIntro();
     this.events.once("shutdown", () => {
       this.gameMusic?.stop();
       if (this.answerHandler) this.input.keyboard.off("keydown", this.answerHandler);
@@ -176,23 +197,31 @@ class GameScene extends Phaser.Scene {
 
   drawArena() {
     const g = this.add.graphics();
-    g.fillGradientStyle(0x0d5739, 0x0d5739, 0x06291e, 0x06291e, 1);
+    g.fillGradientStyle(0x004522, 0x004522, 0x002f17, 0x002f17, 1);
     g.fillRect(0, 0, WIDTH, HEIGHT);
-    g.fillStyle(0x79b952, 0.11);
-    for (let y = 82; y < HEIGHT; y += 52) {
-      for (let x = (y / 52) % 2 ? 18 : 44; x < WIDTH; x += 70) g.fillCircle(x, y, 3);
-    }
-    g.lineStyle(4, 0x93d75a, 0.5);
-    g.strokeRoundedRect(12, 72, WIDTH - 24, HEIGHT - 84, 18);
   }
 
   createHud() {
-    this.add.rectangle(WIDTH / 2, 33, WIDTH, 66, 0x041a13, 0.96).setDepth(10);
-    this.nameText = this.add.text(18, 13, campaign.playerName, this.hudStyle("20px", "#ffe957")).setDepth(11);
-    this.scoreText = this.add.text(18, 39, "", this.hudStyle("15px")).setDepth(11);
-    this.levelText = this.add.text(400, 33, "", this.hudStyle("21px", "#b9f477")).setOrigin(0.5).setDepth(11);
-    this.livesText = this.add.text(674, 12, "", this.hudStyle("18px", "#ff8c8c")).setDepth(11);
-    this.muteText = this.add.text(734, 41, "SOUND", this.hudStyle("12px", "#d8efca"))
+    this.add.image(116, 38, "originalScore").setDisplaySize(205, 97).setDepth(10);
+    this.add.ellipse(116, 42, 104, 42, 0x79ca18).setDepth(11);
+    this.scoreText = this.add.text(116, 42, "", {
+      fontFamily: "MonsterRavie, Ravie, fantasy", fontSize: "22px", color: "#7800d4",
+      stroke: "#340061", strokeThickness: 2
+    }).setOrigin(0.5).setDepth(12);
+
+    this.levelText = this.add.text(400, 27, "", {
+      fontFamily: "MonsterRavie, Ravie, fantasy", fontSize: "19px", color: "#ffffff",
+      stroke: "#000000", strokeThickness: 4
+    }).setOrigin(0.5).setDepth(11);
+
+    this.livesIcons = [];
+    for (let i = 0; i < 3; i += 1) {
+      this.livesIcons.push(
+        this.add.sprite(688 + i * 34, 27, "heroes", campaign.hero === "boy" ? 1 : 0)
+          .setCrop(0, 0, 222, 190).setDisplaySize(32, 51).setDepth(11)
+      );
+    }
+    this.muteText = this.add.text(731, 54, "SOUND", this.hudStyle("12px", "#ffffff"))
       .setDepth(11).setInteractive({ useHandCursor: true });
     this.muteText.on("pointerdown", (pointer, localX, localY, event) => {
       event.stopPropagation();
@@ -200,9 +229,11 @@ class GameScene extends Phaser.Scene {
       this.toggleMute();
     });
 
-    this.add.text(544, 42, "TELEPORT", this.hudStyle("11px", "#d8efca")).setDepth(11);
-    this.add.rectangle(646, 49, 78, 12, 0x142f27).setStrokeStyle(1, 0xb4d99a).setDepth(11);
-    this.teleportBar = this.add.rectangle(607, 49, 0, 8, 0x73e4ff).setOrigin(0, 0.5).setDepth(12);
+    this.add.text(266, 51, "TELE-ENERGY", this.hudStyle("11px", "#ffffff")).setDepth(11);
+    this.add.rectangle(492, 57, 286, 13, 0x490000).setStrokeStyle(2, 0xffffff).setDepth(11);
+    this.teleportBar = this.add.rectangle(350, 57, 0, 9, 0xd10000).setOrigin(0, 0.5).setDepth(12);
+    this.teleportPercent = this.add.text(492, 57, "100%", this.hudStyle("11px", "#ffffff"))
+      .setOrigin(0.5).setDepth(13);
     this.refreshHud();
   }
 
@@ -211,32 +242,29 @@ class GameScene extends Phaser.Scene {
   }
 
   refreshHud() {
-    this.scoreText.setText(`Score ${campaign.score}`);
-    this.levelText.setText(`Level ${campaign.level}`);
-    this.livesText.setText(`Lives ${"●".repeat(Math.max(0, campaign.lives))}`);
+    this.scoreText.setText(String(campaign.score));
+    this.levelText.setText(`LEVEL ${campaign.level}  ·  WAVE ${campaign.wave}`);
+    this.livesIcons?.forEach((icon, index) => icon.setVisible(index < campaign.lives));
   }
 
   spawnMonsters() {
-    const count = Math.min(2 + campaign.stage + Math.floor((campaign.level - 1) / 3), 7);
-    const baseSpeed = 22 + campaign.level * 1.8 + campaign.stage * 3;
+    const count = [3, 5, 7][campaign.wave - 1];
+    const baseSpeed = 22 + campaign.level * 1.8 + campaign.wave * 3;
     const monsterTypes = [
       {
         type: 1,
-        key: "monster1",
         size: [58, 92],
         speed: baseSpeed * 0.7,
         questionLevel: Math.max(1, campaign.level - 1)
       },
       {
         type: 3,
-        key: "monster3",
         size: [104, 78],
         speed: baseSpeed,
         questionLevel: campaign.level
       },
       {
         type: 2,
-        key: "monster2",
         size: [61, 92],
         speed: baseSpeed * 1.45,
         questionLevel: Math.min(10, campaign.level + 1)
@@ -246,16 +274,20 @@ class GameScene extends Phaser.Scene {
     for (let i = 0; i < count; i += 1) {
       const config = monsterTypes[i % monsterTypes.length];
       const point = this.randomArenaPoint();
-      const monster = this.monsters.create(point.x, point.y, config.key);
-      monster.setDisplaySize(...config.size);
+      const monster = this.monsters.create(point.x, point.y, `monster${config.type}-walk-1`);
       monster.setCollideWorldBounds(true).setBounce(1).setDepth(3);
-      monster.body.setSize(monster.displayWidth * 0.68, monster.displayHeight * 0.72);
+      monster.body.setSize(config.size[0] * 0.7, config.size[1] * 0.72);
       monster.monsterType = config.type;
       monster.questionLevel = config.questionLevel;
       monster.question = generateQuestion(monster.questionLevel);
-      monster.moveSpeed = config.speed + i * 0.5;
+      monster.moveSpeed = (config.speed + i * 0.5) * MONSTER_SPEED_MULTIPLIER;
+      monster.pursuitAngle = (Math.PI * 2 * i) / count;
+      monster.pursuitRadius = 22 + (i % 3) * 7;
       monster.wobbleOffset = Math.random() * Math.PI * 2;
-      monster.setInteractive({ useHandCursor: true });
+      monster.walkFrame = 1;
+      monster.lastWalkFrame = 0;
+      monster.walkFrameCount = MONSTER_ANIMATIONS[config.type].frames;
+      monster.setInteractive({ pixelPerfect: true, alphaTolerance: 8, useHandCursor: true });
       monster.on("pointerdown", (pointer, localX, localY, event) => {
         event.stopPropagation();
         this.mouseMoving = false;
@@ -294,9 +326,6 @@ class GameScene extends Phaser.Scene {
       }
     } else {
       this.setTeleporting(false);
-      if (!this.teleporting) {
-        this.teleportCharge = Math.min(TELEPORT_TIME, this.teleportCharge + delta * 0.55);
-      }
       const dx = this.moveTarget.x - this.player.x;
       const dy = this.moveTarget.y - this.player.y;
       const distance = Math.hypot(dx, dy);
@@ -311,12 +340,24 @@ class GameScene extends Phaser.Scene {
 
     for (const monster of this.monsters.getChildren()) {
       if (!monster?.active) continue;
-      this.physics.moveToObject(monster, this.player, monster.moveSpeed);
+      const pursuitAngle = monster.pursuitAngle + time * 0.00016;
+      const targetX = this.player.x + Math.cos(pursuitAngle) * monster.pursuitRadius;
+      const targetY = this.player.y + Math.sin(pursuitAngle) * monster.pursuitRadius;
+      this.physics.moveTo(monster, targetX, targetY, monster.moveSpeed);
       monster.rotation = Math.sin(time / 220 + monster.wobbleOffset) * 0.045;
+      monster.setFlipX(monster.body.velocity.x > 0);
+      if (time - monster.lastWalkFrame > 55) {
+        monster.walkFrame = monster.walkFrame % monster.walkFrameCount + 1;
+        monster.setTexture(`monster${monster.monsterType}-walk-${monster.walkFrame}`);
+        monster.lastWalkFrame = time;
+      }
     }
 
-    this.teleportBar.width = 74 * (this.teleportCharge / TELEPORT_TIME);
-    this.teleportBar.setFillStyle(this.teleportCharge >= TELEPORT_TIME ? 0xffeb4c : 0x73e4ff);
+    const teleRatio = this.teleportCharge / TELEPORT_TIME;
+    this.teleportBar.width = 282 * teleRatio;
+    this.teleportBar.setFillStyle(teleRatio > 0.25 ? 0xd10000 : 0xffe600);
+    this.teleportPercent.setText(`${Math.round(teleRatio * 100)}%`);
+    campaign.teleportCharge = this.teleportCharge;
 
   }
 
@@ -324,6 +365,26 @@ class GameScene extends Phaser.Scene {
     if (this.teleporting === active) return;
     this.teleporting = active;
     this.player.setAlpha(active ? 0.45 : 1);
+  }
+
+  showWaveIntro() {
+    this.roundOver = true;
+    const items = [];
+    const panel = this.add.rectangle(400, 258, 520, 190, 0x000000, 0.88)
+      .setStrokeStyle(4, 0xffffff).setDepth(25);
+    const details = this.add.text(400, 225, `LEVEL:  ${campaign.level}     WAVE:  ${campaign.wave}`, {
+      fontFamily: "MonsterRavie, Ravie, fantasy", fontSize: "27px", color: "#ffffff",
+      stroke: "#000000", strokeThickness: 5
+    }).setOrigin(0.5).setDepth(26);
+    const ready = this.add.text(400, 292, "GET READY!!!", {
+      fontFamily: "MonsterRavie, Ravie, fantasy", fontSize: "44px", color: "#ff4141",
+      stroke: "#ffffff", strokeThickness: 3
+    }).setOrigin(0.5).setDepth(26);
+    items.push(panel, details, ready);
+    this.time.delayedCall(1350, () => {
+      items.forEach((item) => item.destroy());
+      this.roundOver = false;
+    });
   }
 
   askMonster(monster) {
@@ -351,6 +412,11 @@ class GameScene extends Phaser.Scene {
       this.finishGame(false);
       return;
     }
+
+    this.teleportCharge = TELEPORT_TIME;
+    campaign.teleportCharge = TELEPORT_TIME;
+    this.teleportExhausted = false;
+    this.setTeleporting(false);
 
     player.setPosition(400, 390);
     this.moveTarget.x = 400;
@@ -383,26 +449,34 @@ class GameScene extends Phaser.Scene {
   showQuestion(question) {
     let answer = "";
     let submitted = false;
-    const shade = this.add.rectangle(400, 285, 800, 430, 0x020d09, 0.72).setDepth(20);
-    const panel = this.add.rectangle(400, 282, 460, 260, 0xf4ffe5)
-      .setStrokeStyle(8, 0x74b834).setDepth(21);
-    const difficulty = this.add.text(
-      400,
-      166,
-      `MONSTER ${this.currentMonster.monsterType} · LEVEL ${this.currentMonster.questionLevel} QUESTION`,
-      { fontFamily: "Trebuchet MS", fontSize: "14px", fontStyle: "bold", color: "#527348" }
-    ).setOrigin(0.5).setDepth(22);
-    const prompt = this.add.text(400, 205, question.text, {
-      fontFamily: "Trebuchet MS", fontSize: "58px", fontStyle: "bold", color: "#183c25"
-    }).setOrigin(0.5).setDepth(22);
-    const answerText = this.add.text(400, 292, "?", {
-      fontFamily: "Trebuchet MS", fontSize: "46px", fontStyle: "bold", color: "#245d3a",
-      backgroundColor: "#d9efbd", padding: { x: 25, y: 8 }, fixedWidth: 250, align: "center"
-    }).setOrigin(0.5).setDepth(22);
-    const help = this.add.text(400, 370, "Type your answer, then press Enter", {
-      fontFamily: "Trebuchet MS", fontSize: "17px", color: "#31513d"
-    }).setOrigin(0.5).setDepth(22);
-    this.questionPanel = [shade, panel, difficulty, prompt, answerText, help];
+    const x = Phaser.Math.Clamp(this.currentMonster.x - 115, 105, WIDTH - 105);
+    const y = Phaser.Math.Clamp(this.currentMonster.y - 55, 185, HEIGHT - 145);
+    const items = [];
+    const panel = this.add.rectangle(x, y, 190, 272, 0xf5f5f5)
+      .setStrokeStyle(5, 0xc82121).setDepth(21);
+    const screen = this.add.rectangle(x, y - 95, 164, 62, 0xd9d9d9)
+      .setStrokeStyle(2, 0x333333).setDepth(22);
+    const prompt = this.add.text(x, y - 111, question.text, {
+      fontFamily: "Arial, sans-serif", fontSize: "23px", fontStyle: "bold", color: "#ffffff",
+      stroke: "#777777", strokeThickness: 3
+    }).setOrigin(0.5).setDepth(23);
+    const answerText = this.add.text(x, y - 80, "?", {
+      fontFamily: "Arial, sans-serif", fontSize: "24px", fontStyle: "bold", color: "#e00000"
+    }).setOrigin(0.5).setDepth(23);
+    items.push(panel, screen, prompt, answerText);
+
+    const addButton = (label, bx, by, action, color = 0xffffff) => {
+      const button = this.add.rectangle(bx, by, 42, 34, color)
+        .setStrokeStyle(2, 0xc82121).setDepth(22).setInteractive({ useHandCursor: true });
+      const text = this.add.text(bx, by, label, {
+        fontFamily: "Arial, sans-serif", fontSize: "21px", fontStyle: "bold", color: "#142b70"
+      }).setOrigin(0.5).setDepth(23);
+      button.on("pointerdown", (pointer, localX, localY, event) => {
+        event.stopPropagation();
+        action();
+      });
+      items.push(button, text);
+    };
 
     const processKey = (key) => {
       if (submitted) return;
@@ -415,6 +489,15 @@ class GameScene extends Phaser.Scene {
       }
     };
 
+    [["1", -52], ["2", 0], ["3", 52]].forEach(([digit, offset]) => addButton(digit, x + offset, y - 35, () => processKey(digit)));
+    [["4", -52], ["5", 0], ["6", 52]].forEach(([digit, offset]) => addButton(digit, x + offset, y + 5, () => processKey(digit)));
+    [["7", -52], ["8", 0], ["9", 52]].forEach(([digit, offset]) => addButton(digit, x + offset, y + 45, () => processKey(digit)));
+    addButton("0", x, y + 85, () => processKey("0"));
+    addButton("←", x - 52, y + 85, () => this.closeQuestion(), 0xffef5d);
+    addButton("✓", x + 52, y + 85, () => processKey("Enter"), 0x8ee36b);
+    this.questionPanel = items;
+    this.currentMonster.setTint(0x89c9ff);
+
     this.answerHandler = (event) => {
       if (/^[0-9]$/.test(event.key) || event.key === "Backspace" || event.key === "Enter") {
         processKey(event.key);
@@ -424,14 +507,28 @@ class GameScene extends Phaser.Scene {
     this.input.keyboard.on("keydown", this.answerHandler);
   }
 
+  closeQuestion() {
+    if (!this.answering || !this.questionPanel) return;
+    this.input.keyboard.off("keydown", this.answerHandler);
+    this.questionPanel.forEach((item) => item.destroy());
+    this.questionPanel = null;
+    this.currentMonster?.clearTint();
+    this.answering = false;
+  }
+
   checkAnswer(answer, result) {
     this.input.keyboard.off("keydown", this.answerHandler);
     this.questionPanel.forEach((item) => item.destroy());
     this.questionPanel = null;
+    this.currentMonster.clearTint();
 
     if (answer === result) {
-      campaign.score += 100 * campaign.level + 25 * campaign.stage;
-      this.teleportCharge = Math.min(TELEPORT_TIME, this.teleportCharge + 1100);
+      campaign.score += ({ 1: 10, 2: 15, 3: 25 })[this.currentMonster.monsterType] || 10;
+      this.teleportCharge = Math.min(
+        TELEPORT_TIME,
+        this.teleportCharge + TELEPORT_RECHARGE_PER_MONSTER
+      );
+      campaign.teleportCharge = this.teleportCharge;
       this.sound.play("boom", { volume: 0.55 });
       const defeated = this.currentMonster;
       defeated.disableInteractive();
@@ -442,37 +539,34 @@ class GameScene extends Phaser.Scene {
           defeated.destroy();
           this.answering = false;
           this.refreshHud();
-          if (!this.monsters.getChildren().some((monster) => monster.active)) this.completeStage();
+          if (!this.monsters.getChildren().some((monster) => monster.active)) this.completeWave();
         }
       });
     } else {
-      campaign.lives -= 1;
       this.sound.play("wrong", { volume: 0.65 });
       this.cameras.main.shake(220, 0.012);
-      const point = this.randomArenaPoint();
-      this.currentMonster.setPosition(point.x, point.y);
       this.currentMonster.question = generateQuestion(this.currentMonster.questionLevel);
       this.time.delayedCall(360, () => {
         this.answering = false;
-        this.refreshHud();
-        if (campaign.lives <= 0) this.finishGame(false);
       });
     }
   }
 
-  completeStage() {
+  completeWave() {
     this.roundOver = true;
-    const finalWin = campaign.level === 10 && campaign.stage === 3;
+    this.teleportCharge = TELEPORT_TIME;
+    campaign.teleportCharge = TELEPORT_TIME;
+    const finalWin = campaign.level === 10 && campaign.wave === 3;
     if (finalWin) { this.finishGame(true); return; }
 
-    const nextLevel = campaign.stage === 3;
+    const nextLevel = campaign.wave === 3;
     this.showMessage(
       nextLevel ? `LEVEL ${campaign.level} CLEAR!` : "WAVE CLEAR!",
       nextLevel ? "A new maths challenge awaits." : "The next monster wave is ready.",
       "CONTINUE",
       () => {
-        if (nextLevel) { campaign.level += 1; campaign.stage = 1; }
-        else campaign.stage += 1;
+        if (nextLevel) { campaign.level += 1; campaign.wave = 1; }
+        else campaign.wave += 1;
         this.scene.restart();
       }
     );
@@ -537,23 +631,40 @@ class GameScene extends Phaser.Scene {
 
   showMessage(title, message, buttonLabel, onContinue, showMenu = false) {
     this.add.rectangle(400, 285, 800, 430, 0x020d09, 0.82).setDepth(30);
-    this.add.rectangle(400, 275, 560, 270, 0x123d2b).setStrokeStyle(7, 0xaadf55).setDepth(31);
-    this.add.text(400, 205, title, {
-      fontFamily: "Trebuchet MS", fontSize: "42px", fontStyle: "bold", color: "#ffed52"
-    }).setOrigin(0.5).setDepth(32);
-    this.add.text(400, 268, message, {
-      fontFamily: "Trebuchet MS", fontSize: "19px", color: "#efffdf", align: "center",
-      wordWrap: { width: 470 }
-    }).setOrigin(0.5).setDepth(32);
-    const button = this.add.rectangle(400, 344, 230, 50, 0xb9e94b)
-      .setStrokeStyle(3, 0x365d24).setInteractive({ useHandCursor: true }).setDepth(32);
-    this.add.text(400, 344, buttonLabel, this.hudStyle("20px", "#173009")).setOrigin(0.5).setDepth(33);
-    button.once("pointerdown", onContinue);
     if (showMenu) {
-      const menu = this.add.text(400, 397, "Back to title", this.hudStyle("16px", "#ccebb4"))
+      this.add.image(400, 255, "originalGameOver").setDepth(31);
+      const replay = this.add.rectangle(400, 383, 250, 65, 0xffffff, 0.001)
+        .setInteractive({ useHandCursor: true }).setDepth(33);
+      replay.once("pointerdown", onContinue);
+      const score = this.add.text(400, 322, `SCORE: ${campaign.score}`, {
+        fontFamily: "MonsterRavie, Ravie, fantasy", fontSize: "18px", color: "#ffffff",
+        stroke: "#000000", strokeThickness: 4
+      }).setOrigin(0.5).setDepth(33);
+      const menu = this.add.text(400, 464, "BACK TO TITLE", this.hudStyle("15px", "#ffffff"))
         .setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(33);
       menu.once("pointerdown", () => this.scene.start("menu"));
+      return;
     }
+
+    this.add.rectangle(400, 275, 520, 290, 0x000000, 0.9)
+      .setStrokeStyle(4, 0xffffff).setDepth(31);
+    this.add.text(400, 190, `LEVEL:  ${campaign.level}     WAVE:  ${campaign.wave}`, {
+      fontFamily: "MonsterRavie, Ravie, fantasy", fontSize: "25px", color: "#ffffff",
+      stroke: "#000000", strokeThickness: 4
+    }).setOrigin(0.5).setDepth(32);
+    this.add.text(400, 256, title, {
+      fontFamily: "MonsterRavie, Ravie, fantasy", fontSize: "44px", color: "#fff600",
+      stroke: "#ffffff", strokeThickness: 2
+    }).setOrigin(0.5).setDepth(32);
+    this.add.text(400, 306, message, {
+      fontFamily: "Trebuchet MS", fontSize: "17px", color: "#ffffff", align: "center"
+    }).setOrigin(0.5).setDepth(32);
+    const button = this.add.rectangle(400, 365, 230, 48, 0xd81919)
+      .setStrokeStyle(3, 0xffff00).setInteractive({ useHandCursor: true }).setDepth(32);
+    this.add.text(400, 365, buttonLabel, {
+      fontFamily: "MonsterRavie, Ravie, fantasy", fontSize: "17px", color: "#ffffff"
+    }).setOrigin(0.5).setDepth(33);
+    button.once("pointerdown", onContinue);
   }
 
   toggleMute() {
@@ -574,8 +685,8 @@ const config = {
     default: "arcade",
     arcade: { gravity: { x: 0, y: 0 }, debug: false }
   },
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scale: { mode: Phaser.Scale.NONE, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [BootScene, MenuScene, GameScene]
 };
 
-new Phaser.Game(config);
+window.monsterMathsGame = new Phaser.Game(config);

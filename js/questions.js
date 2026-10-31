@@ -26,13 +26,13 @@ export function generateQuestion(level, random = Math.random) {
     case 2:
       a = integer(10, 98, random); b = integer(0, 8, random); operator = "+"; result = a + b; break;
     case 3:
-      a = integer(0, 8, random); b = integer(0, a, random); operator = "−"; result = a - b; break;
+      a = integer(0, 8, random); b = a === 0 ? 0 : integer(0, a - 1, random); operator = "−"; result = a - b; break;
     case 4:
       a = integer(10, 98, random); b = integer(0, 8, random); operator = "−"; result = a - b; break;
     case 5:
       a = integer(0, 98, random); b = integer(0, 98, random); operator = "+"; result = a + b; break;
     case 6:
-      a = integer(11, 99, random); b = integer(10, a, random); operator = "−"; result = a - b; break;
+      a = integer(11, 99, random); b = integer(0, a - 1, random); operator = "−"; result = a - b; break;
     case 7:
       a = integer(0, 8, random); b = integer(0, 8, random); operator = "×"; result = a * b; break;
     case 8: {

@@ -1,0 +1,3 @@
+Choose a hero and
+--- RECORDSEPARATOR ---
+give them a name.

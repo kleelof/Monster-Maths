@@ -7,6 +7,12 @@
   --deep: #071f18;
 }
 
+@font-face {
+  font-family: "MonsterRavie";
+  src: url("../mmswfs/monsterMathsswf/fonts/4_Ravie.ttf") format("truetype");
+  font-display: swap;
+}
+
 * { box-sizing: border-box; }
 
 html, body { width: 100%; height: 100%; }
@@ -14,33 +20,38 @@ html, body { width: 100%; height: 100%; }
 body {
   margin: 0;
   color: var(--ink);
-  background:
-    radial-gradient(circle at 50% 10%, #235638 0, transparent 42%),
-    linear-gradient(145deg, #061814, #0c2d22 55%, #04110e);
+  background: #000000;
   overflow: hidden;
 }
 
 button, input { font: inherit; }
 
 .page-shell {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
 }
 
 .game-frame {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
+  position: relative;
+  width: 800px;
+  height: 500px;
   overflow: hidden;
-  background: #0a3925;
+  background: #00381d;
+  border: 4px solid #132019;
+  border-radius: 0;
+  box-shadow: 0 18px 55px #0008;
 }
 
 #game-container, #game-container canvas {
-  width: 100% !important;
-  height: 100% !important;
+  width: 800px !important;
+  height: 500px !important;
   display: block;
 }
 
@@ -55,19 +66,49 @@ button, input { font: inherit; }
   color: var(--yellow);
 }
 
+[hidden] { display: none !important; }
+
+.menu-controls {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.menu-button {
+  min-width: 220px;
+  min-height: 54px;
+  border: 4px solid #fff20a;
+  border-radius: 3px;
+  color: #ffffff;
+  background: linear-gradient(#f34848, #b50000);
+  box-shadow: 0 5px 0 #5c0000, 0 10px 24px #0007;
+  font-family: "MonsterRavie", fantasy;
+  font-size: 19px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.menu-button:hover,
+.menu-button:focus-visible { background: linear-gradient(#ff6767, #d60000); }
+
+.menu-button:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #203f16, 0 5px 14px #0007;
+}
+
 .game-dialog {
-  width: min(92vw, 520px);
-  border: 3px solid #abe764;
-  border-radius: 22px;
-  color: #f6ffe9;
-  background: linear-gradient(160deg, #123d2c, #071b16);
+  width: min(92vw, 620px);
+  border: 4px solid #ffffff;
+  border-radius: 4px;
+  color: #ffffff;
+  background: #000000ed;
   box-shadow: 0 25px 90px #000c;
   padding: 0;
 }
 
-.game-dialog::backdrop { background: #03100dcc; backdrop-filter: blur(5px); }
+.game-dialog::backdrop { background: #001b0fd9; backdrop-filter: blur(3px); }
 .game-dialog form { padding: clamp(22px, 5vw, 40px); }
-.game-dialog h1 { margin: 0 0 22px; color: #ffe94d; line-height: 1.05; }
+.game-dialog h1 { margin: 0 0 22px; color: #ffffff; line-height: 1.15; font-family: "MonsterRavie", fantasy; }
 .game-dialog label, .game-dialog legend { font-weight: 800; }
 .game-dialog input[type="text"], .game-dialog input:not([type]) {
   width: 100%;
@@ -79,25 +120,25 @@ button, input { font: inherit; }
   background: #f8ffe9;
 }
 
-.eyebrow { margin: 0 0 6px; color: #8fe34e; font-size: .78rem; font-weight: 900; letter-spacing: .16em; }
+.eyebrow { margin: 0 0 6px; color: #ffef22; font-size: .78rem; font-weight: 900; letter-spacing: .16em; }
 fieldset { border: 0; padding: 0; margin: 0 0 24px; }
 .hero-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
 .hero-option { display: grid; place-items: center; gap: 6px; padding: 10px; border: 2px solid #ffffff2c; border-radius: 14px; cursor: pointer; }
-.hero-option:has(input:checked) { border-color: #ffe94d; background: #ffe94d18; }
-.hero-portrait { width: 86px; height: 110px; background-image: url("../assets/images/bo.png"); background-repeat: no-repeat; background-size: 188px 149px; background-position-y: 0; }
+.hero-option:has(input:checked) { border-color: #ffef22; background: #ffef2220; }
+.hero-portrait { width: 110px; height: 132px; background-image: url("../assets/images/bo.png"); background-repeat: no-repeat; background-size: 252px 200px; background-position-y: 0; }
 .hero-portrait.girl { background-position-x: 0; }
-.hero-portrait.boy { background-position-x: -96px; }
+.hero-portrait.boy { background-position-x: -142px; }
 .primary-button {
   width: 100%;
   border: 0;
   border-radius: 12px;
   padding: 13px 18px;
   font-weight: 1000;
-  color: #173009;
-  background: linear-gradient(#fff56a, #aade3c);
+  color: #ffffff;
+  background: linear-gradient(#f34848, #b50000);
   cursor: pointer;
-  box-shadow: 0 5px 0 #5b7d20;
+  box-shadow: 0 5px 0 #5c0000;
 }
-.primary-button:active { transform: translateY(3px); box-shadow: 0 2px 0 #5b7d20; }
+.primary-button:active { transform: translateY(3px); box-shadow: 0 2px 0 #5c0000; }
 .instructions-dialog li { margin: 0 0 12px; line-height: 1.4; }
 

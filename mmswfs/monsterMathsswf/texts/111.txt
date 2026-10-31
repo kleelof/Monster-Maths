@@ -1,0 +1,19 @@
+WHen the calculator appears, you
+--- RECORDSEPARATOR ---
+need to click on the numbers to
+--- RECORDSEPARATOR ---
+enter your answer. Once you enter
+--- RECORDSEPARATOR ---
+the correct answer, the monster will
+--- RECORDSEPARATOR ---
+be destroyed. If you make a mistake,
+--- RECORDSEPARATOR ---
+you can use the       button to go back.
+--- RECORDSEPARATOR ---
+If you do not want to answer the
+--- RECORDSEPARATOR ---
+question, just click        . Be careful,
+--- RECORDSEPARATOR ---
+you cannot move your hero while you
+--- RECORDSEPARATOR ---
+are answering a question.

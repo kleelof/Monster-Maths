@@ -15,6 +15,10 @@
         <p id="loading-message">Loading Monster Maths…</p>
       </div>
     </section>
+    <nav id="menu-controls" class="menu-controls" aria-label="Game menu" hidden>
+      <button id="play-button" class="menu-button" type="button">PLAY</button>
+      <button id="instructions-button" class="menu-button" type="button">HOW TO PLAY</button>
+    </nav>
   </main>
 
   <dialog id="profile-dialog" class="game-dialog">
@@ -51,12 +55,10 @@
       <ol>
         <li>Hold the mouse button to move toward the pointer without letting a monster touch you.</li>
         <li>Click a monster to see its question, then type the answer and press Enter.</li>
-        <li>Monster 1 is slow and asks questions from the previous level.</li>
-        <li>Monster 3 has medium speed and asks current-level questions.</li>
-        <li>Monster 2 is fastest and asks questions from the next level.</li>
-        <li>Correct answers clear monsters. Wrong answers cost one life.</li>
+        <li>Some monsters are faster and more difficult to destroy than others.</li>
+        <li>Correct answers clear monsters. Wrong answers let you try again without losing a life.</li>
         <li>Hold Space while mouse-moving to teleport freely. Teleporting drains the energy meter.</li>
-        <li>Release Space to move normally and recharge teleport energy.</li>
+        <li>Defeating a monster restores a little teleport energy; it refills fully between waves.</li>
         <li>Clear three waves to reach the next maths level.</li>
       </ol>
       <button class="primary-button" value="close">Got it</button>
